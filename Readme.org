@@ -1,0 +1,61 @@
+#+TITLE: easyssh with tags
+#+DATE: Thu May  3 14:34:45 +0545 2018
+#+DESCRIPTION: sick of static configs
+
+* EasySSH revised
+  Refresher to build a more-friendly ssh generator.
+  Most of the code is seamlessly copied from my old [[https://github.com/thapakazi/gosack/blob/5f8f83e61698cea0b092dbf35cd2e95e950ea23e/ssh_config_gen_aws/Readme.org][repo]]
+
+  Changelog:
+  - v2: revised with more better options, verbosity and independed pkg
+  - v1: simple POC version of easy ssh
+* How to use it ?
+  docs on the way, hold your horses... or figure it out on your own ;)
+* Assumptions
+  - aws configs{keys, regions} are exported well
+  - you will help me clean/review it someday in future
+    #+BEGIN_SRC bash
+      export AWS_ACCESS_KEY=my_aws_keys
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY}"
+
+      export AWS_SECRET_KEY=my_dirty_secrets
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_KEY}"
+
+      #region
+      export EC2_REGION="my_regions-1"
+      export AWS_REGION="${EC2_REGION}"
+      export EC2_URL="http://ec2.${EC2_REGION}.amazonaws.com"
+    #+END_SRC
+* Breakdown
+*** Basic usage is like  
+  #+BEGIN_SRC bash
+    ./easyssh -h                            
+      Usage of ./easyssh:
+	-custom_vpc_string="_vpc": custom vpc string/tag to append
+	-end_msg="##END OF GENERATED SSH CONFIG##": custom comment end msg
+	-port="22": ssh port to knock
+	-start_msg="##START OF GENERATED SSH CONFIG##": custom comment msg at start of generated ssh config
+	-username="ubuntu": ssh username to login as
+  #+END_SRC
+
+  where,
+  - *-custom_vpc_string*: custom tag to put at tail of host to diff between vpc/no-vpc instances
+  - *-end_msg & -start_msg* : custom msg to put at start and end of
+    generated config, useful if you have multiple configs
+  - *-username & -port* : self explainator; custom username and port
+*** one more dependency
+    For seamless ssh, bastion is used and the trick is:
+  #+BEGIN_EXAMPLE
+Host *_vpc !my_bastion_host*
+  ProxyCommand ssh -W %h:%p my_bastion_host_vpc
+  User ubuntu
+  Port 7982
+  ForwardAgent yes
+#+END_EXAMPLE
+  where,
+  - *my_bastion_host** : my bastion host i use to ssh to vpc instances
+  - *Host  *_vpc* : means every *Host* definitions tailed with :tag
+    *_vpc* from: _-custom_vpc_string="_vpc": custom vpc string/tag to
+    append_ and avoid the loop with *!my_bastion_host**
+
+  So put/modify somewhere in your `~/.ssh/config`
