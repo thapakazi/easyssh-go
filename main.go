@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 	"os"
-
 	"github.com/namsral/flag"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -67,41 +64,36 @@ func main() {
 			},
 		},
 	}
-	resp, err := ec2obj.DescribeInstances(params)
+	response, err := ec2obj.DescribeInstances(params)
+	fmt.Println("response of describe instances are ", response)
 	check_err(err)
 	// fmt.Println(resp)
 	all_hosts := []HostDefinition{}
-	for idx := range resp.Reservations {
-		for _, inst := range resp.Reservations[idx].Instances {
+	for _, reservation := range response.Reservations {
+		for _, instance := range reservation.Instances {
 			single_host := HostDefinition{UserName: username, PortNumber: port}
-			for _, tag := range inst.Tags {
+
+			for _, tag := range instance.Tags {
 				if *tag.Key == "Name" {
 					value := *tag.Value
 					if value == "" {
-						value = "NameIsBlank_" + *inst.PrivateIpAddress
+						value = "NameIsBlank_" + *instance.PrivateIpAddress
 					}
 					single_host.Host = value
 				}
 			}
 
 			// if vpc use private ip
-			if inst.VpcId != nil {
-				single_host.IpAddr = *inst.PrivateIpAddress
+			if instance.VpcId != nil {
+				single_host.IpAddr = *instance.PrivateIpAddress
 
-				// don't know the easy alternative 😢
-				var vpc_buffer bytes.Buffer
-				vpc_buffer.WriteString(single_host.Host)
-				vpc_buffer.WriteString(custom_vpc_string)
-				single_host.Host = vpc_buffer.String()
-
-				if inst.PublicIpAddress != nil { // if its a publicly facing vpc instance
-					single_host.IpAddr = *inst.PublicIpAddress
+				if instance.PublicIpAddress != nil { // if its a publicly facing vpc instance
+					single_host.IpAddr = *instance.PublicIpAddress
 				}
 			} else {
-				single_host.IpAddr = *inst.PublicIpAddress
+				single_host.IpAddr = *instance.PublicIpAddress
 			}
 
-			// fmt.Println(single_host)
 			// append to array
 			all_hosts = append(all_hosts, single_host)
 		}
