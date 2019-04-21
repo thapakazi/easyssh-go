@@ -2,7 +2,7 @@ package library
 
 import (
 	"html/template"
-	"os"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,9 +27,10 @@ Host {{.Host}}
 func FetchIps(tags map[string][]string) (*ec2.DescribeInstancesOutput, error) {
 	// assuming the keys and env exported via env
 	sess, err := session.NewSession()
-	CheckError(err)
+	if err != nil {
+		return nil, err
+	}
 	ec2obj := ec2.New(sess)
-
 	params := &ec2.DescribeInstancesInput{
 		Filters: func() []*ec2.Filter {
 			filters := []*ec2.Filter{}
@@ -52,7 +53,7 @@ func FetchIps(tags map[string][]string) (*ec2.DescribeInstancesOutput, error) {
 	return ec2obj.DescribeInstances(params)
 }
 
-func GenerateConfig(username string, port string, response *ec2.DescribeInstancesOutput) {
+func GenerateConfig(username string, port string, response *ec2.DescribeInstancesOutput, writer io.Writer) error {
 	// fmt.Println(resp)
 	all_hosts := []HostDefinition{}
 	for _, reservation := range response.Reservations {
@@ -85,5 +86,5 @@ func GenerateConfig(username string, port string, response *ec2.DescribeInstance
 		}
 	}
 	template_sample := template.Must(template.New("sample").Parse(ssh_config_sample))
-	CheckError(template_sample.Execute(os.Stdout, all_hosts))
+	return template_sample.Execute(writer, all_hosts)
 }

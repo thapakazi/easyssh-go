@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/namsral/flag"
 	"github.com/thapakazi/easyssh-go/library"
 )
@@ -27,5 +29,5 @@ func main() {
 
 	response, err := library.FetchIps(tags)
 	library.CheckError(err)
-	library.GenerateConfig(username, port, response)
+	library.GenerateConfig(username, port, response, os.Stdout)
 }
