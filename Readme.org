@@ -31,7 +31,6 @@
   #+BEGIN_SRC bash
     ./easyssh -h                            
       Usage of ./easyssh:
-	-custom_vpc_string="_vpc": custom vpc string/tag to append
 	-end_msg="##END OF GENERATED SSH CONFIG##": custom comment end msg
 	-port="22": ssh port to knock
 	-start_msg="##START OF GENERATED SSH CONFIG##": custom comment msg at start of generated ssh config
@@ -39,23 +38,19 @@
   #+END_SRC
 
   where,
-  - *-custom_vpc_string*: custom tag to put at tail of host to diff between vpc/no-vpc instances
   - *-end_msg & -start_msg* : custom msg to put at start and end of
     generated config, useful if you have multiple configs
   - *-username & -port* : self explainator; custom username and port
 *** one more dependency
     For seamless ssh, bastion is used and the trick is:
   #+BEGIN_EXAMPLE
-Host *_vpc !my_bastion_host*
-  ProxyCommand ssh -W %h:%p my_bastion_host_vpc
+Host !my_bastion_host*
+  ProxyCommand ssh -W %h:%p my_bastion_host
   User ubuntu
-  Port 7982
+  Port 22
   ForwardAgent yes
 #+END_EXAMPLE
   where,
   - *my_bastion_host** : my bastion host i use to ssh to vpc instances
-  - *Host  *_vpc* : means every *Host* definitions tailed with :tag
-    *_vpc* from: _-custom_vpc_string="_vpc": custom vpc string/tag to
-    append_ and avoid the loop with *!my_bastion_host**
 
   So put/modify somewhere in your `~/.ssh/config`
