@@ -66,7 +66,7 @@ func GenerateConfig(username string, port string, response *ec2.DescribeInstance
 					if value == "" {
 						value = "NameIsBlank_" + *instance.PrivateIpAddress
 					}
-					single_host.Host = value + "-" + getRandomString()
+					single_host.Host = value + "-" + *instance.InstanceId
 				}
 			}
 
